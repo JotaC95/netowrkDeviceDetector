@@ -1,23 +1,16 @@
 # Network Device Detector
 
-**Python ARP network discovery and CSV reporting**
+**Discover responding devices on an authorized local IPv4 network.** A small Python learning and diagnostic utility using ARP, Scapy and CSV reporting.
 
-A small network-diagnostics project that discovers devices responding to ARP on a local IPv4 subnet, displays IP/MAC addresses and attempts to identify manufacturers. Built to practice networking and Python troubleshooting.
+## What you can do
 
-## What the current code does
+- Discover ARP responders on a local subnet.
+- Display IP, MAC and a best-effort manufacturer lookup.
+- Save a timestamped CSV report.
 
-- Sends ARP requests with Scapy to a configured local subnet.
-- Prints discovered IP and MAC addresses.
-- Looks up MAC vendors using `mac-vendor-lookup` (unknown vendors are labelled accordingly).
-- Displays a terminal table and saves timestamped CSV results.
+This is **not** a vulnerability scanner, internet-wide discovery tool or complete asset inventory.
 
-## Stack
-
-Python, Scapy, mac-vendor-lookup, tabulate, CSV.
-
-## Run locally
-
-Use only on networks you own or are explicitly authorized to assess.
+## Quick start
 
 ```bash
 git clone https://github.com/JotaC95/netowrkDeviceDetector.git
@@ -26,27 +19,48 @@ python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 pip install mac-vendor-lookup tabulate
+```
+
+**Before scanning:** open `scanner.py` and change `rango = "192.168.1.0/24"` in `main()` to the local subnet you own or are explicitly authorized to test. The range is hardcoded; there is no CLI flag yet.
+
+```bash
 sudo .venv/bin/python scanner.py
 ```
 
-**Configuration:** The current `scanner.py` hardcodes `192.168.1.0/24` in `main()`. Edit that value to match your authorized subnet before running. Elevated permissions may be necessary for raw ARP packets. `requirements.txt` currently lists only Scapy, so the two additional packages are installed explicitly above.
+Raw ARP operations may require elevated permissions. Review the code before running it with `sudo`.
 
-## Example output format
+## Example output (illustrative)
 
 ```text
 IP             MAC                Manufacturer
-192.168.1.x    aa:bb:cc:dd:ee:ff  Unknown
+192.168.1.12   02:00:00:00:00:12  Unknown
 ```
 
-*Illustrative format, not a real scan result.* A timestamped `resultado_escaneo_YYYYMMDD_HHMMSS.csv` contains IP, MAC and manufacturer columns.
+The program writes a `resultado_escaneo_YYYYMMDD_HHMMSS.csv` file in the current working directory with `IP,MAC,MANUFACTURER` columns. Example values above are fictional.
 
-## Limitations and planned improvements
+## How it works
 
-- ARP only reaches the local broadcast domain; it does not discover arbitrary internet hosts.
-- Vendor lookup can fail or be inaccurate; devices may randomize MAC addresses.
-- The subnet is currently hardcoded; configurable CLI options and test coverage are future improvements.
-- No claim of a security vulnerability assessment or comprehensive network inventory.
+```text
+Configured subnet -> Scapy ARP broadcast -> Responses
+                                         -> MAC vendor lookup
+                                         -> Terminal table + CSV
+```
 
-## Engineering value
+The tool only sees devices that respond to local ARP requests. Vendor lookup may fail, and MAC randomization can make manufacturer identification unreliable.
 
-Demonstrates basic Layer 2 discovery, Python packet tooling, structured output and practical network troubleshooting.
+## Troubleshooting
+
+| Problem | What to check |
+| --- | --- |
+| `ModuleNotFoundError` | `requirements.txt` currently includes only Scapy; install `mac-vendor-lookup` and `tabulate` as shown |
+| No devices found | Confirm subnet, network access and permissions; some devices do not respond |
+| Vendor shown as unknown | Vendor database/network lookup can fail; MAC may be randomized |
+| Permission error | ARP packet capture/transmission may need elevated privileges |
+
+## Project status
+
+Educational utility. No automated test suite or cross-platform compatibility guarantee is documented. Future improvements: command-line subnet input, pinned complete dependencies, tests and sanitized screenshots.
+
+## Responsible use
+
+Only scan networks where you have permission. Avoid collecting or sharing identifiable device information without authorization.
